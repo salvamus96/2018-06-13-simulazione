@@ -24,6 +24,8 @@ public class Model {
 	
 	private List <OriginDestination> edges;
 	
+	private Simulatore sim;
+	
 	public Model () {
 		
 		this.fdao = new FlightDelaysDAO();
@@ -65,6 +67,15 @@ public class Model {
 		return this.airlines;
 	}
 
+	public void simula(List<Passeggero> passeggeri, Airline airline) {
+		sim = new Simulatore();
+		sim.init(passeggeri, this.airports);
+		sim.run(airline, this.fdao, this.airportIdMap);
+	}
+
+	public List<Passeggero> getResulSim() {
+		return sim.getResult();
+	}
 	
 	
 }

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -175,9 +176,53 @@ public class FlightDelaysDAO {
 			throw new RuntimeException("Error Connection Database");
 		}
 	
-}
-
+	}
 	
+	/**
+	 * Data una linea aerea, l'aeroporto di partenza e una data, restituisce il primo volo dispobinile
+	 * @param airline
+	 * @param partenza
+	 * @param dataPartenza
+	 * @return
+	 */
+	public Flight firstFlight(Airline airline, Airport partenza, LocalDateTime dataPartenza) {
+		
+		String sql = "SELECT * " + 
+				 	 "FROM flights " + 
+				 	 "WHERE AIRLINE = ? " +
+				 	 "		AND ORIGIN_AIRPORT_ID = ? " + 
+				 	 "      AND SCHEDULED_DEP_DATE > ? " + 
+				 	 "ORDER BY SCHEDULED_DEP_DATE";
+
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, airline.getId());
+			st.setString(2, partenza.getId());
+			st.setString(3, dataPartenza.toString());
+			ResultSet rs = st.executeQuery();
+			
+			if (rs.next()) {
+			
+				Flight flight = new Flight(rs.getInt("id"), rs.getString("airline"), rs.getInt("flight_number"),
+					rs.getString("origin_airport_id"), rs.getString("destination_airport_id"),
+					rs.getTimestamp("scheduled_dep_date").toLocalDateTime(),
+					rs.getTimestamp("arrival_date").toLocalDateTime(), rs.getInt("departure_delay"),
+					rs.getInt("arrival_delay"), rs.getInt("air_time"), rs.getInt("distance"));
+			
+				return flight;
+			}
+			
+			conn.close();
+			return null;
+			
+		} catch (SQLException e) {
+		e.printStackTrace();
+		System.out.println("Errore connessione al database");
+		throw new RuntimeException("Error Connection Database");
+		}
+	
+	}	
 
 
 }

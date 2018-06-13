@@ -1,11 +1,14 @@
 package it.polito.tdp.flightdelays;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.flightdelays.model.Airline;
 import it.polito.tdp.flightdelays.model.Model;
 import it.polito.tdp.flightdelays.model.OriginDestination;
+import it.polito.tdp.flightdelays.model.Passeggero;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -33,6 +36,9 @@ public class FlightDelaysController {
     private Button caricaVoliBtn;
 
     @FXML
+    private Button btnSimula;
+    
+    @FXML
     private TextField numeroPasseggeriTxtInput;
 
     @FXML
@@ -54,11 +60,40 @@ public class FlightDelaysController {
     	for (OriginDestination od : model.getWorstEdges().subList(0, 10))	
     		this.txtResult.appendText(od.toString() + "\n");
     
+    	this.btnSimula.setDisable(false);
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-    		System.out.println("Simula!");
+    	
+    	this.txtResult.clear();
+    	try {
+    		
+    		int numPasseggeri = Integer.parseInt(this.numeroPasseggeriTxtInput.getText());
+    		int numVoli = Integer.parseInt(this.numeroVoliTxtInput.getText());
+    		
+    		Airline airline = this.cmbBoxLineaAerea.getValue();
+        	if (airline == null) {
+        		this.txtResult.appendText("ERRORE: selezionare una linea area!\n");
+        		return;
+        	}
+        	
+        	// evito di creare il grafo quella linea area (suppongo che ci clicchi prima su "Carica voli")
+        	// model.createGraph(airline);
+            
+        	List <Passeggero> passeggeri = new ArrayList<>();
+        	
+        	for (int id = 0; id < numPasseggeri; id ++)
+        		passeggeri.add(new Passeggero(id, numVoli));
+    		
+        	model.simula(passeggeri, airline);
+        	
+        	for (Passeggero p : model.getResulSim())
+        		this.txtResult.appendText(p.toString() + "\n");
+        	
+    	}catch (NumberFormatException e) {
+    		this.txtResult.appendText("ERRORE: inserire valori numeri validi!\n");
+    	}
     }
 
     @FXML
@@ -70,7 +105,7 @@ public class FlightDelaysController {
         assert numeroVoliTxtInput != null : "fx:id=\"numeroVoliTxtInput\" was not injected: check your FXML file 'FlightDelays.fxml'.";
 
      	this.txtResult.setStyle("-fx-font-family: monospace");
-
+     	this.btnSimula.setDisable(true);
     }
     
 	public void setModel(Model model) {
