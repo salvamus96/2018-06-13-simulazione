@@ -70,7 +70,7 @@ public class Passeggero {
 
 	@Override
 	public String toString() {
-		return String.format("%d %d %d", this.passeggeroId, this.voli, this.delay);
+		return String.format("Passeggero%d , voli rimasti: %2d ritado totale: %3d", this.passeggeroId, this.voli, this.delay);
 	}
 	
 	

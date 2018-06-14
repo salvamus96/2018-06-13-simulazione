@@ -75,7 +75,7 @@ public class OriginDestination implements Comparable <OriginDestination>{
 
 	@Override
 	public String toString() {
-		return String.format("%4.3f %3s  -  %3s", weight, origin.getId(), destination.getId());
+		return String.format("Peso: %4.3f, da %3s a %3s", weight, origin.getId(), destination.getId());
 	}
 
 	@Override

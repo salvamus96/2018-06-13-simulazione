@@ -35,9 +35,10 @@ public class Simulatore {
 			
 		}
 		
-//		System.out.println("Inizio simulazione\n\n");
-//		for (Event e : this.queue)
-//			System.out.println(e + "\n");
+		// Stampa relativa al passeggero con voli a disposizione, ritardo accumulato e aeroporto di partenza
+		System.out.println("Inizio simulazione\n");
+		for (Event e : this.queue)
+			System.out.println(e + "\n");
 		
 	}
 
@@ -69,9 +70,12 @@ public class Simulatore {
 				// accumulo il ritardo del volo effettuato
 				int ritardo = first.getArrivalDelay();
 				passeggero.accumuloRitardo(ritardo);
-					
+
+				// Stampa relativa al passeggero con voli a disposizione, ritardo accumulato e aeroporto di partenza
+				System.out.println(e1 + "\n");
+				
 			} else
-				// il passeggero non può viaggiare
+				// il passeggero non può più viaggiare
 				this.result.add(passeggero);
 		
 		}

@@ -41,7 +41,7 @@ public class Event {
 
 	@Override
 	public String toString() {
-		return this.passeggero + " --- " + this.airport + " --- " + this.data;
+		return String.format("%s --- %s --- %s", this.passeggero, this.airport, this.data);
 	}
 	
 	

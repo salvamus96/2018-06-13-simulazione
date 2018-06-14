@@ -202,19 +202,18 @@ public class FlightDelaysDAO {
 			st.setString(3, dataPartenza.toString());
 			ResultSet rs = st.executeQuery();
 			
+			Flight flight = null;
 			if (rs.next()) {
 			
-				Flight flight = new Flight(rs.getInt("id"), rs.getString("airline"), rs.getInt("flight_number"),
+				flight = new Flight(rs.getInt("id"), rs.getString("airline"), rs.getInt("flight_number"),
 					rs.getString("origin_airport_id"), rs.getString("destination_airport_id"),
 					rs.getTimestamp("scheduled_dep_date").toLocalDateTime(),
 					rs.getTimestamp("arrival_date").toLocalDateTime(), rs.getInt("departure_delay"),
 					rs.getInt("arrival_delay"), rs.getInt("air_time"), rs.getInt("distance"));
-			
-				return flight;
 			}
 			
 			conn.close();
-			return null;
+			return flight;
 			
 		} catch (SQLException e) {
 		e.printStackTrace();
