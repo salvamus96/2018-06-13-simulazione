@@ -4,7 +4,7 @@ public class Passeggero {
 
 	private int passeggeroId;
 	private int voli;
-	private int delay;
+	private double delay;
 	
 	public Passeggero (int passeggeroId, int voli) {
 		
@@ -29,7 +29,7 @@ public class Passeggero {
 		this.voli = voli;
 	}
 	
-	public int getDelay() {
+	public double getDelay() {
 		return delay;
 	}
 	
@@ -42,7 +42,7 @@ public class Passeggero {
 		this.voli --;
 	}
 
-	public void accumuloRitardo (int ritardo) {
+	public void accumuloRitardo (double ritardo) {
 		this.delay += ritardo;
 	}
 	
@@ -70,7 +70,7 @@ public class Passeggero {
 
 	@Override
 	public String toString() {
-		return String.format("Passeggero%d , voli rimasti: %2d ritado totale: %3d", this.passeggeroId, this.voli, this.delay);
+		return String.format("Passeggero%d , voli rimasti: %2d ritado totale: %3.2f", this.passeggeroId, this.voli, this.delay);
 	}
 	
 	

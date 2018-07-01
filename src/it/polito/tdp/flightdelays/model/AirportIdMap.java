@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class AirportIdMap {
 
-	private Map <String, Airport> map;
+	private Map <Integer, Airport> map;
 	
 	
 	public AirportIdMap () {
@@ -13,7 +13,7 @@ public class AirportIdMap {
 		this.map = new HashMap <> ();
 	}
 	
-	public Airport get (String airportId) {
+	public Airport get (int airportId) {
 		return map.get(airportId);
 	}
 
@@ -26,7 +26,7 @@ public class AirportIdMap {
 		return old;
 	}
 	
-	public void put (Airport airport, String airportId) {
+	public void put (int airportId, Airport airport) {
 		map.put(airportId, airport);
 	}
 

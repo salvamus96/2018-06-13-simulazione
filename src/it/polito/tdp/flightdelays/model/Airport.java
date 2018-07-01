@@ -1,32 +1,49 @@
 package it.polito.tdp.flightdelays.model;
 
+import java.util.List;
+
 public class Airport {
 
-	private String id;
+	private int id;
+	private String idCode;
 	private String name;
 	private String city;
 	private String state;
 	private String country;
 	private double latitude;
 	private double longitude;
+	private double timezoneOffset;
 	
-	public Airport(String id, String name, String city, String state, String country, double latitude,
-			double longitude) {
+	private List <Flight> flights;
+	
+	public Airport(int id, String idCode, String name, String city, String state, String country, double latitude,
+			double longitude, double timezoneOffset) {
+		super();
 		this.id = id;
+		this.idCode = idCode;
 		this.name = name;
 		this.city = city;
 		this.state = state;
 		this.country = country;
 		this.latitude = latitude;
 		this.longitude = longitude;
+		this.timezoneOffset = timezoneOffset;
 	}
 
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
+	}
+
+	public String getIdCode() {
+		return idCode;
+	}
+
+	public void setIdCode(String idCode) {
+		this.idCode = idCode;
 	}
 
 	public String getName() {
@@ -77,16 +94,27 @@ public class Airport {
 		this.longitude = longitude;
 	}
 
-	@Override
-	public String toString() {
-		return this.id;
+	public double getTimezoneOffset() {
+		return timezoneOffset;
+	}
+
+	public void setTimezoneOffset(double timezoneOffset) {
+		this.timezoneOffset = timezoneOffset;
+	}
+
+	public List<Flight> getFlights() {
+		return flights;
+	}
+
+	public void setFlights(List<Flight> flights) {
+		this.flights = flights;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + id;
 		return result;
 	}
 
@@ -99,12 +127,14 @@ public class Airport {
 		if (getClass() != obj.getClass())
 			return false;
 		Airport other = (Airport) obj;
-		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
+		if (id != other.id)
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return this.idCode;
 	}
 	
 	

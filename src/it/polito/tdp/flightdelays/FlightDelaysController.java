@@ -46,27 +46,32 @@ public class FlightDelaysController {
 
     @FXML
     void doCaricaVoli(ActionEvent event) {
-    	
     	this.txtResult.clear();
-    	
-    	Airline airline = this.cmbBoxLineaAerea.getValue();
-    	if (airline == null) {
-    		this.txtResult.appendText("ERRORE: selezionare una linea area!\n");
-    		return;
-    	}
-    	
-    	model.createGraph(airline);
-    							// estrazione dei primi 10 peggiori
-    	for (OriginDestination od : model.getWorstEdges().subList(0, 10))	
-    		this.txtResult.appendText(od.toString() + "\n");
-    
-    	this.btnSimula.setDisable(false);
+	    
+    	try {
+	    	
+	    	Airline airline = this.cmbBoxLineaAerea.getValue();
+	    	if (airline == null) {
+	    		this.txtResult.appendText("ERRORE: selezionare una linea area!\n");
+	    		return;
+	    	}
+	    	
+	    	model.createGraph(airline);
+	    							// estrazione dei primi 10 peggiori
+	    	for (OriginDestination od : model.getWorstEdges().subList(0, 10))	
+	    		this.txtResult.appendText(od.toString() + "\n");
+	    
+	    	this.btnSimula.setDisable(false);
+	    	
+	    }catch (RuntimeException e) {
+	    	this.txtResult.appendText("ERRORE: caricamento voli non effettuato!\n");
+	    }
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-    	
     	this.txtResult.clear();
+    	
     	try {
     		
     		int numPasseggeri = Integer.parseInt(this.numeroPasseggeriTxtInput.getText());
@@ -78,7 +83,7 @@ public class FlightDelaysController {
         		return;
         	}
         	
-        	// evito di creare il grafo quella linea area (suppongo che ci clicchi prima su "Carica voli")
+        	// evito di creare il grafo per quella linea area (suppongo che si clicchi prima su "Carica voli")
         	// model.createGraph(airline);
             
         	List <Passeggero> passeggeri = new ArrayList<>();
@@ -92,7 +97,7 @@ public class FlightDelaysController {
         		this.txtResult.appendText(p.toString() + "\n");
         	
     	}catch (NumberFormatException e) {
-    		this.txtResult.appendText("ERRORE: inserire valori numeri validi!\n");
+    		this.txtResult.appendText("ERRORE: inserire valori numerici validi!\n");
     	}
     }
 

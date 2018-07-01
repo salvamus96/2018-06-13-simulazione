@@ -68,7 +68,7 @@ public class Simulatore {
 				passeggero.voloEffettuato();
 					
 				// accumulo il ritardo del volo effettuato
-				int ritardo = first.getArrivalDelay();
+				double ritardo = first.getArrivalDelay();
 				passeggero.accumuloRitardo(ritardo);
 
 				// Stampa relativa al passeggero con voli a disposizione, ritardo accumulato e aeroporto di partenza

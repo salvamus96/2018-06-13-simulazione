@@ -19,6 +19,7 @@ public class Model {
 	private List <Airport> airports;
 	
 	private AirportIdMap airportIdMap;
+	private AirlineIdMap airlineIdMap;
 	
 	private Graph <Airport, DefaultWeightedEdge> grafo;
 	
@@ -29,13 +30,15 @@ public class Model {
 	public Model () {
 		
 		this.fdao = new FlightDelaysDAO();
-		
-		// caricamento delle linee aeree
-		this.airlines = this.fdao.loadAllAirlines();
-		
-		this.airports = new ArrayList<>();
 		this.airportIdMap = new AirportIdMap ();
+		this.airlineIdMap = new AirlineIdMap();
+		
 		this.edges = new ArrayList<>();
+
+		// caricamento delle linee aeree
+		this.airlines = this.fdao.loadAllAirlines(this.airlineIdMap);
+		this.airports = new ArrayList<>();
+		
 	}
 	
 	public void createGraph(Airline airline) {
@@ -58,15 +61,24 @@ public class Model {
 	
 	}
 
+	
 	public List<OriginDestination> getWorstEdges() {
+		if (this.grafo == null)
+			throw new RuntimeException();
+
 		Collections.sort(this.edges);
 		return this.edges;
 	}
 	
+	
 	public List<Airline> getAllAirlines() {
-		return this.airlines;
-	}
+		if (this.airlines != null)
+			return this.airlines;
+		
+		return new ArrayList<>();
+		}
 
+	
 	public void simula(List<Passeggero> passeggeri, Airline airline) {
 		sim = new Simulatore();
 		sim.init(passeggeri, this.airports);

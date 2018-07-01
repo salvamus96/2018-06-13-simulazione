@@ -10,9 +10,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import it.polito.tdp.flightdelays.model.Airline;
+import it.polito.tdp.flightdelays.model.AirlineIdMap;
 import it.polito.tdp.flightdelays.model.Airport;
 import it.polito.tdp.flightdelays.model.AirportIdMap;
 import it.polito.tdp.flightdelays.model.Flight;
+import it.polito.tdp.flightdelays.model.FlightIdMap;
 import it.polito.tdp.flightdelays.model.OriginDestination;
 
 public class FlightDelaysDAO {
@@ -21,8 +23,8 @@ public class FlightDelaysDAO {
 	 * Restituisce tutte le linee aree presenti nel DB
 	 * @return
 	 */
-	public List<Airline> loadAllAirlines() {
-		String sql = "SELECT id, airline from airlines";
+	public List<Airline> loadAllAirlines(AirlineIdMap map) {
+		String sql = "SELECT id, iata_code, airline from airlines";
 		List<Airline> result = new ArrayList<Airline>();
 
 		try {
@@ -31,7 +33,8 @@ public class FlightDelaysDAO {
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
-				result.add(new Airline(rs.getString("ID"), rs.getString("airline")));
+				Airline airline = new Airline(rs.getInt("id"), rs.getString("iata_code"), rs.getString("airline"));
+				result.add(map.get(airline));
 			}
 
 			conn.close();
@@ -39,13 +42,12 @@ public class FlightDelaysDAO {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.out.println("Errore connessione al database");
 			throw new RuntimeException("Error Connection Database");
 		}
 	}
 
-	public List<Airport> loadAllAirports() {
-		String sql = "SELECT id, airport, city, state, country, latitude, longitude FROM airports";
+	public List<Airport> loadAllAirports(AirportIdMap map) {
+		String sql = "SELECT id, iata_code, airport, city, state, country, latitude, longitude, timezone_offset FROM airports";
 		List<Airport> result = new ArrayList<Airport>();
 		
 		try {
@@ -54,9 +56,9 @@ public class FlightDelaysDAO {
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
-				Airport airport = new Airport(rs.getString("id"), rs.getString("airport"), rs.getString("city"),
-						rs.getString("state"), rs.getString("country"), rs.getDouble("latitude"), rs.getDouble("longitude"));
-				result.add(airport);
+				Airport airport = new Airport(rs.getInt("id"), rs.getString("iata_code"), rs.getString("airport"), rs.getString("city"),
+						rs.getString("state"), rs.getString("country"), rs.getDouble("latitude"), rs.getDouble("longitude"), rs.getDouble("timezone_offset"));
+				result.add(map.get(airport));
 			}
 			
 			conn.close();
@@ -64,14 +66,13 @@ public class FlightDelaysDAO {
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.out.println("Errore connessione al database");
 			throw new RuntimeException("Error Connection Database");
 		}
 	}
 
-	public List<Flight> loadAllFlights() {
-		String sql = "SELECT id, airline, flight_number, origin_airport_id, destination_airport_id, scheduled_dep_date, "
-				+ "arrival_date, departure_delay, arrival_delay, air_time, distance FROM flights";
+	public List<Flight> loadAllFlights(AirlineIdMap airlineMap, AirportIdMap airportMap, FlightIdMap flightMap) {
+		String sql = "SELECT id, airline_id, flight_number, tail_number, origin_airport_id, destination_airport_id, scheduled_departure_date, "
+				+ "departure_delay, elapsed_time, distance, arrival_date, arrival_delay FROM flights";
 		List<Flight> result = new LinkedList<Flight>();
 
 		try {
@@ -80,12 +81,27 @@ public class FlightDelaysDAO {
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
-				Flight flight = new Flight(rs.getInt("id"), rs.getString("airline"), rs.getInt("flight_number"),
-						rs.getString("origin_airport_id"), rs.getString("destination_airport_id"),
-						rs.getTimestamp("scheduled_dep_date").toLocalDateTime(),
-						rs.getTimestamp("arrival_date").toLocalDateTime(), rs.getInt("departure_delay"),
-						rs.getInt("arrival_delay"), rs.getInt("air_time"), rs.getInt("distance"));
-				result.add(flight);
+				
+				Airport origin = airportMap.get(rs.getInt("origin_airport_id"));
+				Airport destination = airportMap.get(rs.getInt("destination_airport_id"));
+				Airline airline = airlineMap.get(rs.getInt("airline_id"));
+				
+				if (origin != null && destination != null && airline != null) {
+				
+					Flight flight = new Flight(rs.getInt("id"), rs.getInt("airline_id"), rs.getInt("flight_number"), rs.getString("tail_number"),
+							rs.getInt("origin_airport_id"), rs.getInt("destination_airport_id"),
+							rs.getTimestamp("scheduled_departure_date").toLocalDateTime(), rs.getDouble("departure_delay"),
+							rs.getDouble("elapsed_time"), rs.getInt("distance"), 
+							rs.getTimestamp("arrival_date").toLocalDateTime(), 
+							rs.getInt("arrival_delay"));
+					
+					result.add(flightMap.get(flight));
+					
+					// occorre salvare i rifermenti di flight nelle varie liste
+					origin.getFlights().add(flightMap.get(flight));
+					destination.getFlights().add(flightMap.get(flight));
+					airline.getFlights().add(flightMap.get(flight));
+				}			
 			}
 
 			conn.close();
@@ -93,7 +109,6 @@ public class FlightDelaysDAO {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.out.println("Errore connessione al database");
 			throw new RuntimeException("Error Connection Database");
 		}
 	}
@@ -106,21 +121,23 @@ public class FlightDelaysDAO {
 	 */
 	public List<Airport> getAllAirportFromAirline(Airline airline, AirportIdMap airportIdMap) {
 
-		String sql = "SELECT DISTINCT a.id, a.airport, a.city, a.state, a.country, a.latitude, a.longitude " + 
+		String sql = "SELECT DISTINCT a.id, iata_code, airport, city, state, country, latitude, longitude, timezone_offset " + 
 				 	 "FROM airports AS a, flights AS f " + 
-				 	 "WHERE (a.ID = f.ORIGIN_AIRPORT_ID or a.ID = f.DESTINATION_AIRPORT_ID) AND f.AIRLINE = ? ";
+				 	 "WHERE (a.ID = f.ORIGIN_AIRPORT_ID or a.ID = f.DESTINATION_AIRPORT_ID) " +
+				 	 "  	AND f.AIRLINE_ID = ? ";
 	
 		List<Airport> result = new ArrayList<Airport>();
 		
 		try {
 			Connection conn = ConnectDB.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setString(1, airline.getId());
+			st.setInt(1, airline.getId());
 			ResultSet rs = st.executeQuery();
 	
 			while (rs.next()) {
-				Airport airport = new Airport(rs.getString("a.id"), rs.getString("a.airport"), rs.getString("a.city"),
-						rs.getString("a.state"), rs.getString("a.country"), rs.getDouble("a.latitude"), rs.getDouble("a.longitude"));
+				Airport airport = new Airport(rs.getInt("a.id"), rs.getString("iata_code"), rs.getString("airport"), rs.getString("city"),
+						rs.getString("state"), rs.getString("country"), rs.getDouble("latitude"), rs.getDouble("longitude"), rs.getDouble("timezone_offset"));
+				
 				// se non sono presenti nella mappa, li crea e li aggiunge
 				result.add(airportIdMap.get(airport));
 			}
@@ -130,7 +147,6 @@ public class FlightDelaysDAO {
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.out.println("Errore connessione al database");
 			throw new RuntimeException("Error Connection Database");
 		}
 
@@ -147,7 +163,7 @@ public class FlightDelaysDAO {
 
 		String sql = "SELECT DISTINCT ORIGIN_AIRPORT_ID as origin, DESTINATION_AIRPORT_ID as destination, AVG(ARRIVAL_DELAY) as AVG " + 
 					 "FROM flights " + 
-					 "WHERE AIRLINE = ? " +
+					 "WHERE AIRLINE_ID = ? " +
 					 "GROUP BY origin, destination";
 		
 		List <OriginDestination> result = new ArrayList<>();
@@ -155,12 +171,12 @@ public class FlightDelaysDAO {
 		try {
 			Connection conn = ConnectDB.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setString(1, airline.getId());
+			st.setInt(1, airline.getId());
 			ResultSet rs = st.executeQuery();
 	
 			while (rs.next()) {
-				Airport origin = airportIdMap.get(rs.getString("origin"));
-				Airport destination = airportIdMap.get(rs.getString("destination"));
+				Airport origin = airportIdMap.get(rs.getInt("origin"));
+				Airport destination = airportIdMap.get(rs.getInt("destination"));
 				
 				// controllo fondamentale per poter proseguire 
 				if (origin != null && destination != null)
@@ -172,7 +188,6 @@ public class FlightDelaysDAO {
 	
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.out.println("Errore connessione al database");
 			throw new RuntimeException("Error Connection Database");
 		}
 	
@@ -189,36 +204,36 @@ public class FlightDelaysDAO {
 		
 		String sql = "SELECT * " + 
 				 	 "FROM flights " + 
-				 	 "WHERE AIRLINE = ? " +
+				 	 "WHERE AIRLINE_ID = ? " +
 				 	 "		AND ORIGIN_AIRPORT_ID = ? " + 
-				 	 "      AND SCHEDULED_DEP_DATE > ? " + 
-				 	 "ORDER BY SCHEDULED_DEP_DATE";
+				 	 "      AND SCHEDULED_DEPARTURE_DATE > ? " + 
+				 	 "ORDER BY SCHEDULED_DEPARTURE_DATE";
 
 		try {
 			Connection conn = ConnectDB.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setString(1, airline.getId());
-			st.setString(2, partenza.getId());
+			st.setInt(1, airline.getId());
+			st.setInt(2, partenza.getId());
 			st.setString(3, dataPartenza.toString());
 			ResultSet rs = st.executeQuery();
 			
 			Flight flight = null;
 			if (rs.next()) {
 			
-				flight = new Flight(rs.getInt("id"), rs.getString("airline"), rs.getInt("flight_number"),
-					rs.getString("origin_airport_id"), rs.getString("destination_airport_id"),
-					rs.getTimestamp("scheduled_dep_date").toLocalDateTime(),
-					rs.getTimestamp("arrival_date").toLocalDateTime(), rs.getInt("departure_delay"),
-					rs.getInt("arrival_delay"), rs.getInt("air_time"), rs.getInt("distance"));
+				flight = new Flight(rs.getInt("id"), rs.getInt("airline_id"), rs.getInt("flight_number"), rs.getString("tail_number"),
+						rs.getInt("origin_airport_id"), rs.getInt("destination_airport_id"),
+						rs.getTimestamp("scheduled_departure_date").toLocalDateTime(), rs.getDouble("departure_delay"),
+						rs.getDouble("elapsed_time"), rs.getInt("distance"), 
+						rs.getTimestamp("arrival_date").toLocalDateTime(), 
+						rs.getInt("arrival_delay"));
 			}
 			
 			conn.close();
 			return flight;
 			
 		} catch (SQLException e) {
-		e.printStackTrace();
-		System.out.println("Errore connessione al database");
-		throw new RuntimeException("Error Connection Database");
+			e.printStackTrace();
+			throw new RuntimeException("Error Connection Database");
 		}
 	
 	}	
